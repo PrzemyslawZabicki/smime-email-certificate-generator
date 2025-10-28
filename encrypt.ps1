@@ -24,7 +24,19 @@ function Lock-FileAES256 {
         return
     }
     $key = [System.IO.File]::ReadAllBytes($keyPath)
-
+    # If key was saved as Base64 instead of raw bytes:
+    # $key = [Convert]::FromBase64String((Get-Content $keyPath -Raw))
+    
+    # Load AES IV
+    $ivPath = "$PSScriptRoot\aes_256.iv"
+    if (-not (Test-Path $ivPath)) {
+        Write-Error "IV file not found at $ivPath"
+        return
+    }
+    $iv = [System.IO.File]::ReadAllBytes($ivPath)
+    # If iv was saved as Base64 instead of raw bytes:
+    # $iv = [Convert]::FromBase64String((Get-Content $ivPath -Raw))
+    
     # Read file content
     $plainText = Get-Content $Path -Raw
     $bytes = [System.Text.Encoding]::UTF8.GetBytes($plainText)
@@ -32,20 +44,17 @@ function Lock-FileAES256 {
     # Create AES encryptor
     $aes = [System.Security.Cryptography.Aes]::Create()
     $aes.Key = $key
-    $aes.GenerateIV()
-    $iv = $aes.IV
+    $aes.IV  = $iv
 
     $encryptor = $aes.CreateEncryptor()
     $encryptedBytes = $encryptor.TransformFinalBlock($bytes, 0, $bytes.Length)
 
-    # Combine IV + encrypted data
-    $finalBytes = $iv + $encryptedBytes
+    # Save encrypted data only (IV is already stored separately)
+    [System.IO.File]::WriteAllBytes($Path, $encryptedBytes)
 
-    # Overwrite original file with encrypted content
-    [System.IO.File]::WriteAllBytes($Path, $finalBytes)
-
-    Write-Host "File encrypted in-place: $Path" -ForegroundColor Cyan
+    Write-Host "File encrypted in-place using external IV: $Path" -ForegroundColor Cyan
 }
+
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Exe.

@@ -27,20 +27,28 @@ function Unlock-FileAES256 {
         return
     }
     $key = [System.IO.File]::ReadAllBytes($keyPath)
+    # If key was saved as Base64 instead of raw bytes:
+    # $key = [Convert]::FromBase64String((Get-Content $keyPath -Raw))
+
+    # Load AES IV
+    $ivPath = "$PSScriptRoot\aes_256.iv"
+    if (-not (Test-Path $ivPath)) {
+        Write-Error "IV file not found at $ivPath"
+        return
+    }
+    $iv = [System.IO.File]::ReadAllBytes($ivPath)
+    # If iv was saved as Base64 instead of raw bytes:
+    # $iv = [Convert]::FromBase64String((Get-Content $ivPath -Raw))
 
     # Read encrypted file
-    $allBytes = [System.IO.File]::ReadAllBytes($Path)
-
-    # Extract IV and encrypted data
-    $iv = $allBytes[0..15]
-    $data = $allBytes[16..($allBytes.Length - 1)]
+    $cipherBytes = [System.IO.File]::ReadAllBytes($Path)
 
     # Decrypt
     $aes = [System.Security.Cryptography.Aes]::Create()
     $aes.Key = $key
-    $aes.IV = $iv
+    $aes.IV  = $iv
     $decryptor = $aes.CreateDecryptor()
-    $plainBytes = $decryptor.TransformFinalBlock($data, 0, $data.Length)
+    $plainBytes = $decryptor.TransformFinalBlock($cipherBytes, 0, $cipherBytes.Length)
     $plainText = [System.Text.Encoding]::UTF8.GetString($plainBytes)
 
     # Write result to output file
