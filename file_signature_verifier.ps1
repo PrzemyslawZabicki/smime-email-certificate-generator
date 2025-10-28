@@ -13,33 +13,34 @@ $form = New-Object System.Windows.Forms.Form
 $form.Text = "File Signature Verification"
 $form.Size = '500,360'
 $form.StartPosition = "CenterScreen"
-$form.BackColor = [System.Drawing.Color]::FromArgb(40,40,40)
-$form.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+$form.BackColor = [System.Drawing.Color]::FromArgb(0,0,0)
+$fontName = "Segoe UI"
+$fontSize = 9
+$fontStyle = [System.Drawing.FontStyle]::Bold
 $form.FormBorderStyle = 'FixedDialog'
 
 # Variables to store file paths
 $global:filePath = $global:sigPath = $global:certPath = $null
 
 # Standard button size
-$buttonSize = New-Object System.Drawing.Size(180,40)
+$buttonSize = New-Object System.Drawing.Size(280,30)
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Create styled button
 function New-StyledButton($text, $x, $y) {
     $btn = New-Object System.Windows.Forms.Button
     $btn.Text = $text
+    $btn.Font = New-Object System.Drawing.Font($fontName, $fontSize, $fontStyle)
     $btn.Location = New-Object System.Drawing.Point($x, $y)
     $btn.Size = $buttonSize
-    $btn.BackColor = [System.Drawing.Color]::FromArgb(50,50,50)
-    $btn.ForeColor = [System.Drawing.Color]::White
+    $btn.BackColor = [System.Drawing.Color]::FromArgb(0,0,0)
+    $btn.ForeColor = [System.Drawing.Color]::LightGreen
     $btn.FlatStyle = 'Flat'
-    $btn.FlatAppearance.BorderColor = [System.Drawing.Color]::Cyan
+    $btn.FlatAppearance.BorderColor = [System.Drawing.Color]::FromArgb(255, 12, 124)
     $btn.FlatAppearance.BorderSize = 2
     $btn.FlatAppearance.MouseOverBackColor = [System.Drawing.Color]::FromArgb(90,90,90)
     $btn.FlatAppearance.MouseDownBackColor = [System.Drawing.Color]::FromArgb(30,30,30)
     $btn.Cursor = [System.Windows.Forms.Cursors]::Hand
-
     # Optional: simulate 3D with slight padding
-    $btn.Padding = '4,2,4,2'
 
     # Hover effects (manual override)
     $btn.Add_MouseEnter({
