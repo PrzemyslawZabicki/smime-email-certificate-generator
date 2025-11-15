@@ -19,7 +19,6 @@ $hashAlgorithm       = "SHA256"
 $keyExportPolicy     = "Exportable"
 $keyUsage            = @("DigitalSignature", "KeyEncipherment")
 $textExtension       = @("2.5.29.37={text}1.3.6.1.5.5.7.3.2,1.3.6.1.5.5.7.3.3,1.3.6.1.5.5.7.3.4,1.3.6.1.5.5.7.3.8,1.3.6.1.4.1.311.10.3.12")
-$pfxPassword         = Read-Host -Prompt "Enter PFX password:" -AsSecureString
 <# 
 2.5.29.37 : OID for Extended Key Usage (EKU)
 EKU Purpose	                OID	Description             Description

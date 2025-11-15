@@ -19,10 +19,19 @@ Set-PowerShell_Console
 ################################################################################################################################################################
 
 # Load config.json file  for creating cert. via PowerShell PKI API 
-$configJSON = Get-Content -Path "$PSScriptRoot\config.json" | ConvertFrom-Json
+$configJSON = Get-Content -Path "$PSScriptRoot\config.json" -Raw | ConvertFrom-Json
 
 # Load smime-request.inf for creating cert. via cert.request
 $configINF = Get-Content -Path "$PSScriptRoot\smime-certreq.inf"
+
+# Import AES-256
+. "$PSScriptRoot\aes_256.ps1"
+
+# 1. Save AES key to SecretStore (only once)
+Save-AesKeyToSecretManager -SecretName "pfxKey"
+
+# 2. Save encrypted PFX password blob
+Save-PfxPasswordBlob -SecretName "pfxKey" -BlobPath "$PSScriptRoot\pfxPass"
 
 
 ################################################################################################################################################################
@@ -46,26 +55,31 @@ $configINF = Get-Content -Path "$PSScriptRoot\smime-certreq.inf"
 # Def.
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------
 function Set-PFX_Personal_Information_Exchange_Crypto_Container {
-    
-    $PFX_Crypto_Data_Container = New-SelfSignedCertificate -Type $configJSON.type `
-        -Subject "CN=$configJSON.userName, E=$configJSON.userEmail)" `
+    param (
+        [Parameter(Mandatory=$true)]
+        [pscustomobject]$configJSON
+    )
+
+    $PFX_Crypto_Data_Container = New-SelfSignedCertificate `
+        -Type $configJSON.type `
+        -Subject "CN=$($configJSON.userName), E=$($configJSON.userEmail)" `
         -DnsName $configJSON.dnsName `
         -CertStoreLocation $configJSON.certStoreLocation `
         -KeyAlgorithm $configJSON.keyAlgorithm `
         -KeyLength $configJSON.keyLength `
         -HashAlgorithm $configJSON.hashAlgorithm `
-        -KeyExportPolicy:$configJSON.exportable `
-        -SmimeCapabilities:$configJSON.smimeEnabled `
+        -KeyExportPolicy $configJSON.keyExportPolicy `
         -KeyUsage $configJSON.keyUsage `
         -TextExtension $configJSON.textExtension
+
     return $PFX_Crypto_Data_Container
 }
 
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Exe.
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------
-$PFX_Crypto_Data_Container = Set-PFX_Personal_Information_Exchange_Crypto_Container
-
+$PFX_Crypto_Data_Container = Set-PFX_Personal_Information_Exchange_Crypto_Container -configJSON $configJSON
+$PFX_Crypto_Data_Container | Format-List Subject, Issuer, FriendlyName, Thumbprint
 
 ################################################################################################################################################################
 # 2. EXPORT CERTIFICATE 
@@ -119,8 +133,9 @@ function Export-CertificateBundle {
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Exe.
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------
-Export-CertificateBundle -pfxPath $configJSON.pfxPath -cerPath $configJSON.cerPath -cert $PFX_Crypto_Data_Container -pfxPassword $pfxPassword 
-
+# Load PFX password blob and use in export
+$securePassword = Get-PfxPasswordForExport -SecretName "pfxKey" -BlobPath "$PSScriptRoot\pfxPass"
+Export-CertificateBundle -pfxPath $configJSON.pfxPath -cerPath $configJSON.cerPath -cert $PFX_Crypto_Data_Container -pfxPassword $securePassword
 
 ################################################################################################################################################################
 # 3. IMPORT CERTIFICATE
@@ -177,5 +192,5 @@ function Import-Certificate_To_Stores {
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------
 # Exe
 # --------------------------------------------------------------------------------------------------------------------------------------------------------------
-Import-Certificate_To_Stores
+# Import-Certificate_To_Stores
 

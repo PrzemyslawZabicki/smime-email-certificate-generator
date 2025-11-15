@@ -339,7 +339,7 @@ function Sign_ANYFile { param (
 # -------------------------------------------------------------------------------------------------------------------------------------------
 # Function call example
 # -------------------------------------------------------------------------------------------------------------------------------------------
-# Sign_ANYFile -filePath "$env:UserProfile\Downloads\doc.pdf"
+# Sign_ANYFile -filePath "$env:UserProfile\Downloads\Przemyslaw_Zabicki_IT_Rex_Agency.html"
 
 
 
